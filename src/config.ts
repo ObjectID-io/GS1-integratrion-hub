@@ -1,8 +1,5 @@
-// Keep dotenv runtime config, but avoid needing TS typings for the module.
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const dotenv = require("dotenv");
-
-dotenv.config();
+// Load runtime configuration from .env (if present).
+import "dotenv/config";
 
 export const config = {
   port: Number(process.env.PORT ?? "8080"),

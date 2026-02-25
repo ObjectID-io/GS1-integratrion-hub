@@ -2,25 +2,22 @@
 
 TypeScript/Express hub exposing **GS1 EPCIS 2.0-like REST endpoints** and forwarding events into **ObjectID**.
 
-This version is intentionally **simple and strict**:
+This hub is intentionally **simple and strict**:
 
 - **Mono-tenant**: the hub uses a single ObjectID signer (seed/DID) configured via `.env`.
 - **No API key auth**: intended to run inside the customer VPN / private network.
-- Calls the **oid_gs1::OIDGs1IHub Move module** directly via `@iota/iota-sdk`.
+- Calls the **OID GS1 Move module** directly via `@iota/iota-sdk`.
 - **No auto-create on capture**: if an EPCIS event refers to a product twin that was not created/registered, capture returns an error.
 
 ## Endpoints
 
 - `POST /twin` (alias `POST /gs1/twin`)
-  - Creates (idempotently, via local mapping) a `GS1Resource` and registers it into the shared `GS1Registry`
-  - Persists a local mapping `epcUri/sgtin -> resourceId` in `./data/gs1-twins.json`
+  - Creates a `GS1Resource` and registers it into the shared `GS1Registry`.
+  - Idempotent: it first checks the registry by **canonical_id = epcUri**.
 
 - `POST /capture` (alias `POST /epcis/capture`)
-  - Captures EPCIS events and updates the on-chain `GS1Resource` state:
-    - `set_last_event`
-    - `update_current_context`
-    - `set_parent_sscc` (when present)
-  - **Requires** the twin to be already registered via `POST /twin`
+  - Captures EPCIS events and updates the on-chain `GS1Resource` state.
+  - **Requires** the twin to be already registered via `POST /twin`.
 
 - `GET /health`
 
@@ -32,31 +29,35 @@ Optional (disabled by default):
 ## Quick start
 
 ```bash
-cp .env.example .env
+cp .env.example.testnet .env   # or: cp .env.example.mainnet .env
 npm i
 npm run dev
 ```
 
 ## Configuration
 
-Required:
+Required (you can find this data in ObjectID dapp):
 
 - `OID_SEED_HEX`
 - `OID_DID`
-- `OID_GS1_PACKAGE_ID` (on-chain Move package id)
+- `OID_NETWORK` (`testnet` | `mainnet`)
+- `OID_GS1_PACKAGE_ID` (on-chain OID GS1 Move package id)
 - `OID_GS1_REGISTRY_ID` (shared `GS1Registry` object id)
+- `OID_CREDIT_PACKAGE` (ObjectID credit core Move package id used by the OID GS1 package)
+- `OID_CREDIT_POLICY_ID`
+- `OID_CREDIT_TOKEN_ID`
+- `OID_CONTROLLER_CAP_ID`
 
 Optional:
 
-- `OID_NETWORK` (default `mainnet`)
-- `OID_RPC_URL` (if you want to override the RPC URL after bootstrap)
-- `OID_PACKAGE_ID` (override the core ObjectID Move package id)
-- `GRAPHQL_PROVIDER` (used to discover the credit policy object)
-- `OID_CREDIT_POLICY_ID` (skip GraphQL policy discovery)
-- `OID_CREDIT_TOKEN_ID` / `OID_CONTROLLER_CAP_ID` (skip owned-object discovery)
-- `DATA_DIR` (default `./data`)
-- `MAPPING_FILE` (override full path to mapping file)
+- `OID_RPC_URL` (override the RPC URL)
 - `ALLOW_CALLER_DID_HEADER` (default `true`)
+- `ENABLE_DEBUG_ENDPOINTS` (default `false`)
+- `OID_LINKED_DOMAIN_ORIGIN` (legacy; not used to build txs)
+- `OID_USE_GAS_STATION` (default `true`)
+- `OID_GAS1_URL`, `OID_GAS1_TOKEN`, `OID_GAS2_URL`, `OID_GAS2_TOKEN`
+- `PORT` (default `8080`)
+- `LOG_LEVEL` (default `info`)
 
 ### DLVC (linked domain) rule
 

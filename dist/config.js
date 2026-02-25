@@ -2,10 +2,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.config = void 0;
 exports.requireConfig = requireConfig;
-// Keep dotenv runtime config, but avoid needing TS typings for the module.
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const dotenv = require("dotenv");
-dotenv.config();
+// Load runtime configuration from .env (if present).
+require("dotenv/config");
 exports.config = {
     port: Number(process.env.PORT ?? "8080"),
     logLevel: process.env.LOG_LEVEL ?? "info",
