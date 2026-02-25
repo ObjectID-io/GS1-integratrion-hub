@@ -1,0 +1,41 @@
+{
+  "name": "integration-hub-gs1",
+  "version": "0.1.0",
+  "private": true,
+  "license": "UNLICENSED",
+  "description": "Integration hub between GS1 EPCIS 2.0 (REST) and ObjectID.",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "lint": "eslint .",
+    "generate:epcis": "bash scripts/generate-epcis-types.sh",
+    "dev:dist": "node --watch --enable-source-maps dist/index.js",
+    "dev:node": "node --watch src/index.ts"
+  },
+  "dependencies": {
+    "@iota/identity-wasm": "^1.8.0-beta.2",
+    "@iota/iota-sdk": "^1.4.0",
+    "@types/node": "^20.14.15",
+    "axios": "^1.13.5",
+    "debug": "4.3.4",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "pino": "^9.3.2",
+    "pino-http": "^10.3.0",
+    "uuid": "^10.0.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/uuid": "^10.0.0",
+    "eslint": "^10.0.2",
+    "openapi-typescript": "^7.5.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.3"
+  },
+  "overrides": {
+    "debug": "4.3.4"
+  }
+}
