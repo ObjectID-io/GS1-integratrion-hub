@@ -1,4 +1,4 @@
-# integration-hub-gs1
+# ObjectID - GS1 Integration Hub
 
 TypeScript/Express hub exposing **GS1 EPCIS 2.0-like REST endpoints** and forwarding events into **ObjectID**.
 
