@@ -1,10 +1,10 @@
 {
   "hub": "http://localhost:8080",
   "network": "",
-  "epcUri": "urn:epc:id:sgtin:5591291.422728.483703981",
-  "resourceObjectId": "0xb00dec631607dbe47e2aff02c5120a16dcb66bb5b796a83288db74c91e0466b9",
-  "eventId": "9ddae022-ff2b-4586-854c-b15035efabe3",
-  "eventTime": "2026-02-26T14:33:06.000Z",
-  "eventObjectId": "0xf2b67c2f10f50cee4daf022a46f1a275e45ce1bf4a1a88b580ea7f056a3146e1",
-  "txId": "2FAfkTde5bYyphZ5GnEDrNZhgHFXvFo2wedZHwda1QCa"
+  "epcUri": "urn:epc:id:sgtin:9172853.248432.853516873",
+  "resourceObjectId": "0xd94e08fdcd10c631e2bd6236180f757f5f095295a11705326ea96289a82fe891",
+  "eventId": "18e20c15-3ed4-4cae-acd8-ed02d303e5cf",
+  "eventTime": "2026-02-26T15:16:07.000Z",
+  "eventObjectId": "0x7c3bdaf5ec7643c965bb63ea7ac8988da1e0f7b89d54369b491b6ebd6c0b07a8",
+  "txId": "8aNoDffZDBFnfdHnT3kpQLeegAddyCaJHK7z2nV7Xukj"
 }

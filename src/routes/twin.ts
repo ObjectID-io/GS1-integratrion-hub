@@ -83,6 +83,31 @@ async function listOwnedObjects(client: any, owner: string, limit = 50): Promise
   return out;
 }
 
+function safeDecodeParam(s: string): string {
+  const t = String(s ?? "").trim();
+  if (!t) return "";
+  try {
+    return decodeURIComponent(t);
+  } catch {
+    return t;
+  }
+}
+
+function isObjectIdLike(s: string): boolean {
+  return /^0x[0-9a-fA-F]+$/.test(String(s ?? "").trim());
+}
+
+async function resolveTwinRefToObjectId(refRaw: string): Promise<{ objectId: string; gs1Id?: string }> {
+  const ref = safeDecodeParam(refRaw);
+  if (!ref) return { objectId: "" };
+
+  if (isObjectIdLike(ref)) return { objectId: ref };
+
+  // treat as GS1 canonical_id (EPC URI)
+  const existing = await resolveResourceIdByCanonicalId(ref);
+  return existing ? { objectId: existing, gs1Id: ref } : { objectId: "" };
+}
+
 // ---------------------------------------------------------------------
 // Create / register a GS1 twin explicitly
 // Aliases: POST /twin, POST /gs1/twin
@@ -147,23 +172,28 @@ twinRouter.post(["/twin", "/gs1/twin"], async (req: Request, res: Response) => {
 // ---------------------------------------------------------------------
 
 // Resolve GS1 resource id from canonical id (EPC URI)
-twinRouter.get(["/twin/resolve", "/gs1/twin/resolve"], async (req: Request, res: Response) => {
-  const epcUri = String(req.query.epcUri ?? "").trim();
-  if (!epcUri) {
-    res.status(400).json({ error: "missing_epcUri" });
+// Get resource by objectId OR by GS1 canonical id (epcUri)
+twinRouter.get(["/twin/:id", "/gs1/twin/:id", "/event/:id", "/gs1/event/:id"], async (req: Request, res: Response) => {
+  const ref = String(req.params.id ?? "").trim();
+  if (!ref) {
+    res.status(400).json({ error: "missing_id" });
     return;
   }
 
   try {
-    const existing = await resolveResourceIdByCanonicalId(epcUri);
-    if (!existing) {
-      res.status(404).json({ error: "not_found", epcUri });
+    const env = await getHubSignerEnv();
+    const { objectId, gs1Id } = await resolveTwinRefToObjectId(ref);
+
+    if (!objectId) {
+      res.status(404).json({ error: "not_found", ref: safeDecodeParam(ref) });
       return;
     }
-    res.status(200).json({ objectId: existing, epcUri });
+
+    const obj = await getObjectFull(env.client as any, objectId);
+    res.status(200).json({ objectId, gs1Id, obj });
   } catch (e: any) {
-    console.error("[/twin/resolve] Registry lookup failed:", e?.stack ?? e);
-    res.status(502).json({ error: "registry_lookup_failed", message: (e?.message ?? String(e)).toString() });
+    const msg = (e?.message ?? String(e)).toString();
+    res.status(502).json({ error: "rpc_failed", message: msg });
   }
 });
 
@@ -190,8 +220,8 @@ twinRouter.get(["/twin/:id", "/gs1/twin/:id", "/event/:id", "/gs1/event/:id"], a
 // Get GS1Event objects owned by a GS1Resource (object-owned)
 // - full=1 returns full objects, otherwise only ids
 twinRouter.get(["/twin/:id/events", "/gs1/twin/:id/events"], async (req: Request, res: Response) => {
-  const owner = String(req.params.id ?? "").trim();
-  if (!owner) {
+  const ref = String(req.params.id ?? "").trim();
+  if (!ref) {
     res.status(400).json({ error: "missing_id" });
     return;
   }
@@ -200,9 +230,14 @@ twinRouter.get(["/twin/:id/events", "/gs1/twin/:id/events"], async (req: Request
 
   try {
     const env = await getHubSignerEnv();
-    const owned = await listOwnedObjects(env.client as any, owner);
+    const { objectId: owner, gs1Id } = await resolveTwinRefToObjectId(ref);
 
-    // module name can be gs1_registry or OIDGs1IHub; derive from env for robustness
+    if (!owner) {
+      res.status(404).json({ error: "not_found", ref: safeDecodeParam(ref) });
+      return;
+    }
+
+    const owned = await listOwnedObjects(env.client as any, owner);
     const gs1EventSuffix = `::${env.gs1ModuleName}::GS1Event`;
 
     const ids = owned
@@ -213,7 +248,7 @@ twinRouter.get(["/twin/:id/events", "/gs1/twin/:id/events"], async (req: Request
     const uniq = Array.from(new Set(ids));
 
     if (!full) {
-      res.status(200).json({ owner, eventObjectIds: uniq });
+      res.status(200).json({ owner, gs1Id, eventObjectIds: uniq });
       return;
     }
 
@@ -226,7 +261,7 @@ twinRouter.get(["/twin/:id/events", "/gs1/twin/:id/events"], async (req: Request
       }
     }
 
-    res.status(200).json({ owner, eventObjectIds: uniq, events });
+    res.status(200).json({ owner, gs1Id, eventObjectIds: uniq, events });
   } catch (e: any) {
     console.error("[/twin/:id/events] RPC failed:", e?.stack ?? e);
     res.status(502).json({ error: "rpc_failed", message: (e?.message ?? String(e)).toString() });
