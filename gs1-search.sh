@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env bash
+#!/usr/bin/env bash
 set -Eeuo pipefail
 
 # gs1-search.sh
@@ -108,30 +108,6 @@ NODE
     return 0
   fi
   od -An -N64 -tu1 /dev/urandom | tr -dc '0-9' | awk -v n="$n" '{s=s$0} END{print substr(s,1,n)}'
-}
-gs1_mod10_check_digit() {
-  local body="$1"
-  if [[ ! "$body" =~ ^[0-9]+$ ]]; then
-    echo ""
-    return 1
-  fi
-  local sum=0
-  local w=3
-  local i d
-  for ((i=${#body}-1; i>=0; i--)); do
-    d=${body:i:1}
-    sum=$((sum + d * w))
-    if [ "$w" -eq 3 ]; then w=1; else w=3; fi
-  done
-  echo $(((10 - (sum % 10)) % 10))
-}
-
-rand_gln() {
-  local body
-  body="$(rand_digits 12)"
-  local cd
-  cd="$(gs1_mod10_check_digit "$body")"
-  echo "${body}${cd}"
 }
 
 uuid() {
@@ -258,7 +234,7 @@ create_resource_interactive() {
   item_ref="$(rand_digits 6)"
   serial="$(rand_digits 9)"
   default_epc="urn:epc:id:sgtin:${company_prefix}.${item_ref}.${serial}"
-  default_gln="$(rand_gln)"
+  default_gln="$(rand_digits 13)"
   default_dl="https://example.com/dl/${serial}"
 
   echo "Resource creation"
